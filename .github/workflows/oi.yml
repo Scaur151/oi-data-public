@@ -1,0 +1,29 @@
+name: oi-collector
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: oi-collector
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Снимок OI
+        run: python3 oi_collector.py
+      - name: Сохранить
+        run: |
+          git config user.name "oi-bot"
+          git config user.email "oi-bot@users.noreply.github.com"
+          git add oi_*.csv
+          git diff --cached --quiet && exit 0
+          git commit -m "oi $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
